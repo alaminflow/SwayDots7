@@ -1,0 +1,35 @@
+# Secrets / credentials
+*.env
+*.secret
+secrets/
+private/
+.ssh/
+
+# System / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.directory
+
+# Build artifacts
+*.o
+*.so
+node_modules/
+__pycache__/
+*.pyc
+
+# Cache
+.cache/
+*.log
+
+# Backup files created by the installer
+.dotfiles_backup/
+
+# Wallpaper (add your own, don't commit large images)
+config/sway/wallpaper.jpg
+config/sway/wallpaper.png
+
+# Neovim plugin data (managed by packer)
+config/nvim/plugin/

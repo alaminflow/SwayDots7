@@ -1,0 +1,249 @@
+# =============================================================================
+#  Sway Configuration — Catppuccin Mocha
+#  Hardware: Intel i5-1035G1 | 8GB RAM
+# =============================================================================
+
+# ── Variables ─────────────────────────────────────────────────────────────────
+set $mod Mod4
+set $left  Left
+set $down  Down
+set $up    Up
+set $right Right
+
+set $term        foot
+set $term2       kitty
+set $menu        wofi --show drun
+set $browser     firefox
+set $editor      nvim
+set $filemanager yazi
+set $lock        swaylock
+
+# ── Catppuccin Mocha palette ──────────────────────────────────────────────────
+set $rosewater #f5e0dc
+set $flamingo  #f2cdcd
+set $pink      #f5c2e7
+set $mauve     #cba6f7
+set $red       #f38ba8
+set $maroon    #eba0ac
+set $peach     #fab387
+set $yellow    #f9e2af
+set $green     #a6e3a1
+set $teal      #94e2d5
+set $sky       #89dceb
+set $sapphire  #74c7ec
+set $blue      #89b4fa
+set $lavender  #b4befe
+set $text      #cdd6f4
+set $subtext1  #bac2de
+set $subtext0  #a6adc8
+set $overlay2  #9399b2
+set $overlay1  #7f849c
+set $overlay0  #6c7086
+set $surface2  #585b70
+set $surface1  #45475a
+set $surface0  #313244
+set $base      #1e1e2e
+set $mantle    #181825
+set $crust     #11111b
+
+# ── Output / Display ──────────────────────────────────────────────────────────
+# Place your wallpaper at ~/.config/sway/wallpaper.jpg (or change path below)
+# To use a solid colour fallback: output * bg #1e1e2e solid_color
+output * bg ~/.config/sway/wallpaper.jpg fill
+
+# Primary display — adjust resolution/scale for your screen
+output eDP-1 resolution 1920x1080 position 0,0 scale 1
+
+# ── Input ─────────────────────────────────────────────────────────────────────
+input type:keyboard {
+    xkb_layout  us
+    xkb_options caps:escape          # Caps Lock → Escape (vim life)
+    repeat_delay  300
+    repeat_rate    50
+}
+
+input type:touchpad {
+    dwt           enabled            # Disable while typing
+    tap           enabled
+    natural_scroll enabled
+    middle_emulation enabled
+    scroll_method  two_finger
+    accel_profile  adaptive
+    pointer_accel  0.3
+}
+
+# ── Window appearance ─────────────────────────────────────────────────────────
+default_border pixel 2
+default_floating_border pixel 2
+hide_edge_borders smart
+smart_gaps on
+gaps inner 6
+gaps outer 4
+font pango:JetBrainsMono Nerd Font 10
+
+# class                  border    background  text       indicator  child_border
+client.focused           $mauve    $base       $text      $mauve     $mauve
+client.focused_inactive  $surface1 $base       $subtext1  $surface1  $surface1
+client.unfocused         $surface0 $base       $overlay1  $surface0  $surface0
+client.urgent            $red      $base       $red       $red       $red
+
+# ── Autostart ─────────────────────────────────────────────────────────────────
+exec_always {
+    pkill waybar; waybar
+    pkill dunst;  dunst
+}
+
+exec {
+    /usr/lib/polkit-kde-authentication-agent-1
+    swayidle -w \
+        timeout 300 'swaylock -f' \
+        timeout 600 'swaymsg "output * dpms off"' \
+        resume      'swaymsg "output * dpms on"' \
+        before-sleep 'swaylock -f'
+    wl-paste --type text --watch cliphist store
+    wl-paste --type image --watch cliphist store
+    /usr/lib/xdg-desktop-portal-wlr
+    nm-applet --indicator
+    blueman-applet
+}
+
+# ── Key bindings — Applications ───────────────────────────────────────────────
+bindsym $mod+Return       exec $term
+bindsym $mod+Shift+Return exec $term2
+bindsym $mod+b            exec $browser
+bindsym $mod+e            exec $term -e $filemanager
+bindsym $mod+Shift+e      exec thunar
+bindsym $mod+d            exec $menu
+bindsym $mod+period       exec wofi --show emoji
+bindsym $mod+v            exec cliphist list | wofi --dmenu | cliphist decode | wl-copy
+
+# ── Key bindings — System ──────────────────────────────────────────────────────
+bindsym $mod+Shift+q      kill
+bindsym $mod+Shift+c      reload
+bindsym $mod+Shift+x      exec wlogout
+
+bindsym $mod+Escape       exec $lock
+bindsym $mod+Shift+l      exec swaylock && systemctl suspend
+
+# ── Key bindings — Layout (arrow keys; Super+Arrow and Super+Shift+Arrow) ──────
+bindsym $mod+$left        focus left
+bindsym $mod+$down        focus down
+bindsym $mod+$up          focus up
+bindsym $mod+$right       focus right
+
+bindsym $mod+Left         focus left
+bindsym $mod+Down         focus down
+bindsym $mod+Up           focus up
+bindsym $mod+Right        focus right
+
+bindsym $mod+Shift+$left  move left
+bindsym $mod+Shift+$down  move down
+bindsym $mod+Shift+$up    move up
+bindsym $mod+Shift+$right move right
+
+bindsym $mod+Shift+Left   move left
+bindsym $mod+Shift+Down   move down
+bindsym $mod+Shift+Up     move up
+bindsym $mod+Shift+Right  move right
+
+# Split
+bindsym $mod+backslash    splith
+bindsym $mod+minus        splitv
+
+# Layouts
+bindsym $mod+s     layout stacking
+bindsym $mod+w     layout tabbed
+bindsym $mod+t     layout toggle split
+
+# Fullscreen / float
+bindsym $mod+f             fullscreen
+bindsym $mod+Shift+space   floating toggle
+bindsym $mod+space         focus mode_toggle
+bindsym $mod+a             focus parent
+
+# Resize
+bindsym $mod+r mode "resize"
+mode "resize" {
+    bindsym $left  resize shrink width  10px
+    bindsym $down  resize grow   height 10px
+    bindsym $up    resize shrink height 10px
+    bindsym $right resize grow   width  10px
+
+    bindsym Left   resize shrink width  10px
+    bindsym Down   resize grow   height 10px
+    bindsym Up     resize shrink height 10px
+    bindsym Right  resize grow   width  10px
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+# ── Workspaces ─────────────────────────────────────────────────────────────────
+bindsym $mod+1  workspace number 1
+bindsym $mod+2  workspace number 2
+bindsym $mod+3  workspace number 3
+bindsym $mod+4  workspace number 4
+bindsym $mod+5  workspace number 5
+bindsym $mod+6  workspace number 6
+bindsym $mod+7  workspace number 7
+bindsym $mod+8  workspace number 8
+bindsym $mod+9  workspace number 9
+bindsym $mod+0  workspace number 10
+
+bindsym $mod+Shift+1  move container to workspace number 1
+bindsym $mod+Shift+2  move container to workspace number 2
+bindsym $mod+Shift+3  move container to workspace number 3
+bindsym $mod+Shift+4  move container to workspace number 4
+bindsym $mod+Shift+5  move container to workspace number 5
+bindsym $mod+Shift+6  move container to workspace number 6
+bindsym $mod+Shift+7  move container to workspace number 7
+bindsym $mod+Shift+8  move container to workspace number 8
+bindsym $mod+Shift+9  move container to workspace number 9
+bindsym $mod+Shift+0  move container to workspace number 10
+
+bindsym $mod+Tab       workspace next
+bindsym $mod+Shift+Tab workspace prev
+
+# ── Screenshots ───────────────────────────────────────────────────────────────
+bindsym Print      exec grim ~/Pictures/Screenshots/$(date +%Y%m%d_%H%M%S).png
+bindsym $mod+Print exec grimblast --notify copysave area ~/Pictures/Screenshots/$(date +%Y%m%d_%H%M%S).png
+bindsym $mod+Shift+Print exec grimblast --notify copy area
+
+# ── Media / brightness keys ───────────────────────────────────────────────────
+bindsym XF86AudioRaiseVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ && pkill -RTMIN+8 waybar
+bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && pkill -RTMIN+8 waybar
+bindsym XF86AudioMute        exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && pkill -RTMIN+8 waybar
+bindsym XF86AudioMicMute     exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+
+bindsym XF86MonBrightnessUp   exec brightnessctl set 5%+
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
+
+bindsym XF86AudioPlay  exec playerctl play-pause
+bindsym XF86AudioNext  exec playerctl next
+bindsym XF86AudioPrev  exec playerctl previous
+
+# ── Scratchpad ────────────────────────────────────────────────────────────────
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+grave       scratchpad show
+
+# ── Floating windows ──────────────────────────────────────────────────────────
+for_window [app_id="pavucontrol"]     floating enable, resize set 700 450
+for_window [app_id="blueman-manager"] floating enable, resize set 600 400
+for_window [app_id="nm-connection-editor"] floating enable
+for_window [title="Firefox — Sharing Indicator"] kill
+for_window [app_id="org.kde.polkit-kde-authentication-agent-1"] floating enable
+
+# ── Workspace assignments ──────────────────────────────────────────────────────
+assign [app_id="firefox"]          workspace 2
+assign [app_id="brave-browser"]    workspace 2
+assign [app_id="codium"]           workspace 3
+assign [class="VSCodium"]          workspace 3
+assign [app_id="obsidian"]         workspace 4
+assign [app_id="org.telegram.desktop"] workspace 5
+
+# ── XWayland ──────────────────────────────────────────────────────────────────
+xwayland enable
+
+# ── Include extra configs ──────────────────────────────────────────────────────
+include /etc/sway/config.d/*
+include ~/.config/sway/conf.d/*

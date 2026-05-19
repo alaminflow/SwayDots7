@@ -1,0 +1,88 @@
+# yazi — config/yazi/yazi.toml
+
+[manager]
+ratio          = [1, 4, 3]
+sort_by        = "alphabetical"
+sort_sensitive = false
+sort_reverse   = false
+sort_dir_first = true
+linemode       = "none"
+show_hidden    = false
+show_symlink   = true
+
+[preview]
+tab_size        = 2
+max_width       = 600
+max_height      = 900
+cache_dir       = ""
+image_filter    = "triangle"
+image_quality   = 75
+sixel_fraction  = 15
+ueberzug_scale  = 1
+ueberzug_offset = [0, 0, 0, 0]
+
+[opener]
+edit = [
+  { run = '$EDITOR "$@"', desc = "Edit in $EDITOR", block = true },
+]
+open = [
+  { run = 'xdg-open "$@"', desc = "Open" },
+]
+reveal = [
+  { run = 'xdg-open "$(dirname "$0")"', desc = "Reveal" },
+]
+extract = [
+  { run = 'unar "$1"', desc = "Extract here" },
+]
+play = [
+  { run = 'mpv "$@"', orphan = true },
+  { run = 'mediainfo "$1" | less', block = true, desc = "Media info" },
+]
+view_pdf = [
+  { run = 'zathura "$1"', orphan = true, desc = "Zathura" },
+]
+
+[open]
+rules = [
+  { mime = "text/*",                          use = "edit" },
+  { mime = "image/*",                         use = "open" },
+  { mime = "video/*",                         use = "play" },
+  { mime = "audio/*",                         use = "play" },
+  { mime = "application/pdf",                 use = "view_pdf" },
+  { mime = "application/zip",                 use = "extract" },
+  { mime = "application/gzip",                use = "extract" },
+  { mime = "application/x-tar",               use = "extract" },
+  { mime = "application/x-7z-compressed",     use = "extract" },
+  { mime = "application/x-rar",               use = "extract" },
+  { mime = "*",                               use = "open" },
+]
+
+[tasks]
+micro_workers    = 10
+macro_workers    = 25
+bizarre_retry    = 5
+image_alloc      = 536870912 # 512MB
+image_bound      = [0, 0]
+suppress_preload = false
+
+[plugin]
+preloaders = [
+  { mime = "image/*", run = "image" },
+]
+previewers = [
+  { name = "*/",                run = "folder" },
+  { mime = "text/*",            run = "code" },
+  { mime = "image/*",           run = "image" },
+  { mime = "video/*",           run = "video" },
+  { mime = "application/pdf",   run = "pdf" },
+  { mime = "application/zip",   run = "archive" },
+  { mime = "application/gzip",  run = "archive" },
+  { mime = "application/x-tar", run = "archive" },
+  { name = "*",                 run = "file" },
+]
+
+[input]
+cursor_blink = false
+
+[log]
+enabled = false
