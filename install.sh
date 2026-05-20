@@ -71,8 +71,12 @@ install_paru() {
   step "Installing paru (AUR helper)"
   sudo pacman -S --needed --noconfirm git base-devel
   local tmp; tmp=$(mktemp -d)
-  git clone --depth=1 https://aur.archlinux.org/paru.git "$tmp/paru"
-  (cd "$tmp/paru" && makepkg -si --noconfirm)
+  if ! git clone --depth=1 https://aur.archlinux.org/paru.git "$tmp/paru" 2>&1 | tee -a "$LOG_FILE"; then
+    err "Failed to clone paru — check internet connection"; return 1
+  fi
+  if ! (cd "$tmp/paru" && makepkg -si --noconfirm 2>&1 | tee -a "$LOG_FILE"); then
+    err "Failed to build paru — ensure base-devel is installed"; return 1
+  fi
   rm -rf "$tmp"
   ok "paru installed"
 }
@@ -94,8 +98,8 @@ install_packages() {
     waybar dunst wofi
     foot kitty
     cliphist wl-clipboard
-    grim slurp brightnessctl playerctl pavucontrol
-    xdg-desktop-portal-wlr xdg-user-dirs
+    grim slurp brightnessctl playerctl pavucontrol libnotify
+    xdg-desktop-portal xdg-desktop-portal-wlr xdg-user-dirs
 
     # Development
     git nodejs npm python python-pipx python-virtualenv
@@ -103,30 +107,29 @@ install_packages() {
 
     # CLI tools
     bat eza fd ripgrep fzf btop fastfetch starship
-    zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting
-    timeshift ufw cronie alsa-utils
+    zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting ufw cronie alsa-utils
     neovim vim tmux
 
     # File managers
     yazi thunar
-    gvfs gvfs-mtp ffmpegthumbnailer unar jq poppler fd zoxide
+    gvfs gvfs-mtp ffmpegthumbnailer unarchiver jq poppler fd zoxide
 
     # Apps
-    firefox obsidian libreoffice-fresh okular zathura zathura-pdf-mupdf
+    firefox telegram-desktop swappy nwg-look
+    libreoffice-fresh okular zathura zathura-pdf-mupdf
     mpv imv
 
     # Virtualisation
     qemu-full virt-manager virt-viewer ovmf libvirt
 
     # Theming / fonts
-    ttf-jetbrains-mono-nerd noto-fonts noto-fonts-emoji
+    ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji
+    papirus-icon-theme
     gtk3 gtk4 qt5ct qt6ct
 
-    # System tools
-    auto-cpufreq power-profiles-daemon
+    # System tools (power-profiles-daemon is installed but masked — see setup_cpufreq)
     htop lsof strace man-db man-pages
     wget curl unzip p7zip rsync
-    pipewire-v4l2
 
     # Wayland specific
     qt5-wayland qt6-wayland
@@ -141,23 +144,32 @@ install_packages() {
 
   # ── AUR packages ────────────────────────────────────────────────────────────
   AUR_PKGS=(
+    obsidian
     brave-bin
     vscodium-bin
     bitwarden
-    telegram-desktop
+
     catppuccin-gtk-theme-mocha
     catppuccin-cursors-mocha
+    greetd
+    tuigreet
     wlogout
     rofimoji
+    auto-cpufreq
+    timeshift
     grimblast-git
-    swappy
-    nwg-look
+
+
   )
 
   log "Installing AUR packages..."
   paru -S --needed --noconfirm "${AUR_PKGS[@]}" 2>&1 | tee -a "$LOG_FILE" || true
 
   ok "All packages installed"
+
+  step "Rebuilding font cache"
+  fc-cache -fv 2>&1 | tail -3 | tee -a "$LOG_FILE" || true
+  ok "Font cache rebuilt"
 }
 
 # ── Backup existing configs ────────────────────────────────────────────────────
@@ -173,11 +185,13 @@ backup_configs() {
     "$HOME/.config/dunst"
     "$HOME/.config/wofi"
     "$HOME/.config/nvim"
-    "$HOME/.config/starship.toml"
     "$HOME/.config/btop"
     "$HOME/.config/yazi"
     "$HOME/.config/zathura"
+    "$HOME/.config/fastfetch"
+    "$HOME/.config/starship.toml"
     "$HOME/.zshrc"
+    "$HOME/.zprofile"
     "$HOME/.zshenv"
     "$HOME/.gitconfig"
   )
@@ -196,11 +210,12 @@ link_configs() {
   mkdir -p "$HOME/.config"
 
   # Config dirs
-  local config_dirs=(sway waybar foot kitty dunst wofi nvim btop yazi zathura)
+  local config_dirs=(sway waybar foot kitty dunst wofi nvim btop yazi zathura fastfetch)
   for d in "${config_dirs[@]}"; do
     local src="$DOTFILES_DIR/config/$d"
     local dst="$HOME/.config/$d"
     if [[ -d "$src" ]]; then
+      [[ -d "$dst" && ! -L "$dst" ]] && { mkdir -p "$BACKUP_DIR"; cp -r "$dst" "$BACKUP_DIR/$d" && warn "Backed up: $dst"; }
       rm -rf "$dst"
       ln -sf "$src" "$dst"
       ok "Linked: $HOME/.config/$d"
@@ -220,11 +235,12 @@ link_configs() {
   done
 
   # Home dotfiles
-  local home_files=(.zshrc .zshenv .gitconfig .tmux.conf)
+  local home_files=(.zshrc .zshenv .zprofile .gitconfig .tmux.conf)
   for f in "${home_files[@]}"; do
     local src="$DOTFILES_DIR/home/$f"
     local dst="$HOME/$f"
     if [[ -f "$src" ]]; then
+      [[ -f "$dst" && ! -L "$dst" ]] && { mkdir -p "$BACKUP_DIR"; cp "$dst" "$BACKUP_DIR/$f" && warn "Backed up: $dst"; }
       rm -f "$dst"
       ln -sf "$src" "$dst"
       ok "Linked: $HOME/$f"
@@ -236,14 +252,18 @@ link_configs() {
 setup_shell() {
   step "Setting up Zsh as default shell"
   if [[ "$SHELL" != "$(which zsh)" ]]; then
-    chsh -s "$(which zsh)"
+    chsh -s "$(which zsh)" || warn "Could not change shell — run: chsh -s $(which zsh)"
     ok "Default shell changed to zsh"
   else
     ok "zsh already default shell"
   fi
 
   # Create XDG dirs
-  xdg-user-dirs-update
+  xdg-user-dirs-update || warn "xdg-user-dirs-update failed — run manually after install"
+
+  # Ensure Screenshots dir exists for grim
+  mkdir -p "$HOME/Pictures/Screenshots"
+  ok "Screenshots directory ready"
 }
 
 # ── Services ──────────────────────────────────────────────────────────────────
@@ -253,7 +273,7 @@ enable_services() {
   local system_services=(NetworkManager docker cronie ufw libvirtd bluetooth)
   for svc in "${system_services[@]}"; do
     if systemctl list-unit-files --type=service | grep -q "^${svc}.service"; then
-      sudo systemctl enable --now "$svc" && ok "System service: $svc"
+      sudo systemctl enable --now "$svc" && ok "System service: $svc" || warn "Could not enable service: $svc"
     else
       warn "Service not found: $svc"
     fi
@@ -262,27 +282,33 @@ enable_services() {
   local user_services=(pipewire pipewire-pulse wireplumber dunst)
   for svc in "${user_services[@]}"; do
     if systemctl --user list-unit-files --type=service | grep -q "^${svc}.service"; then
-      systemctl --user enable --now "$svc" && ok "User service: $svc"
+      systemctl --user enable --now "$svc" && ok "User service: $svc" || warn "Could not enable user service: $svc"
     else
       warn "User service not found: $svc"
     fi
   done
 
   # UFW basic rules
-  sudo ufw default deny incoming
-  sudo ufw default allow outgoing
-  sudo ufw allow ssh
-  sudo ufw --force enable
-  ok "UFW firewall configured"
+  if command -v ufw &>/dev/null; then
+    sudo ufw default deny incoming
+    sudo ufw default allow outgoing
+    sudo ufw allow ssh
+    sudo ufw --force enable
+    ok "UFW firewall configured"
+  else
+    warn "ufw not found — skipping firewall setup"
+  fi
 }
 
 # ── User groups ───────────────────────────────────────────────────────────────
 setup_groups() {
   step "Adding user to required groups"
-  local groups=(libvirt kvm video audio storage docker wheel input)
+  local groups=(libvirt kvm video audio storage wheel input)
   for g in "${groups[@]}"; do
     if getent group "$g" &>/dev/null; then
-      sudo usermod -aG "$g" "$USER" && ok "Group: $g"
+      sudo usermod -aG "$g" "$USER" && ok "Group: $g" || warn "Failed to add group: $g"
+    else
+      warn "Group not found (skipped): $g"
     fi
   done
 }
@@ -292,7 +318,7 @@ setup_cpufreq() {
   step "Setting up auto-cpufreq"
   if command -v auto-cpufreq &>/dev/null; then
     if ! systemctl is-enabled auto-cpufreq &>/dev/null; then
-      sudo auto-cpufreq --install
+      sudo auto-cpufreq --install || warn "auto-cpufreq --install failed — run manually after reboot"
       # Mask power-profiles-daemon — conflicts with auto-cpufreq
       sudo systemctl mask power-profiles-daemon 2>/dev/null || true
       ok "auto-cpufreq installed and enabled (power-profiles-daemon masked)"
@@ -351,14 +377,42 @@ EOF
   ok "GTK theme applied"
 }
 
+
+# ── greetd + tuigreet login manager ──────────────────────────────────────────
+setup_greetd() {
+  step "Configuring greetd + tuigreet login manager"
+
+  # Copy config to /etc/greetd/
+  if [[ -f "$DOTFILES_DIR/config/greetd/config.toml" ]]; then
+    sudo mkdir -p /etc/greetd
+    sudo cp "$DOTFILES_DIR/config/greetd/config.toml" /etc/greetd/config.toml
+    ok "greetd config installed to /etc/greetd/config.toml"
+  else
+    warn "greetd config not found at $DOTFILES_DIR/config/greetd/config.toml"
+  fi
+
+  # Disable any other display managers first
+  for dm in lightdm gdm sddm lxdm; do
+    if systemctl is-enabled "$dm" &>/dev/null; then
+      sudo systemctl disable "$dm" && warn "Disabled existing display manager: $dm"
+    fi
+  done
+
+  # Enable greetd
+  if systemctl list-unit-files | grep -q "^greetd.service"; then
+    sudo systemctl enable greetd && ok "greetd enabled — will start on next boot"
+  else
+    warn "greetd service not found — is greetd installed?"
+  fi
+}
+
 # ── Docker post-install ───────────────────────────────────────────────────────
 setup_docker() {
   step "Configuring Docker"
   if ! getent group docker &>/dev/null; then
     sudo groupadd docker
   fi
-  sudo usermod -aG docker "$USER"
-  ok "Docker configured (re-login required)"
+  sudo usermod -aG docker "$USER" && ok "Docker configured (re-login required)" || warn "Could not add user to docker group"
 }
 
 # ── Git global config ─────────────────────────────────────────────────────────
@@ -378,10 +432,10 @@ finish() {
 
   echo -e "${CYAN}Next steps:${RESET}"
   echo -e "  ${BOLD}1.${RESET} Log out and back in (for group changes to take effect)"
-  echo -e "  ${BOLD}2.${RESET} Start Sway: ${CYAN}sway${RESET} (or select from display manager)"
+  echo -e "  ${BOLD}2.${RESET} Reboot — greetd will start automatically and launch Sway after login"
   echo -e "  ${BOLD}3.${RESET} Launch Neovim and run ${CYAN}:PackerSync${RESET}"
   echo -e "  ${BOLD}4.${RESET} Set git identity: ${CYAN}git config --global user.name / user.email${RESET}"
-  echo -e "  ${BOLD}5.${RESET} Install Papirus icons: ${CYAN}paru -S papirus-icon-theme${RESET} (optional)"
+  echo -e "  ${BOLD}5.${RESET} Papirus icons already installed — if missing: ${CYAN}sudo pacman -S papirus-icon-theme${RESET}"
   echo -e "\n${YELLOW}Log file: $LOG_FILE${RESET}\n"
 }
 
@@ -409,6 +463,7 @@ run_all() {
   setup_shell
   setup_groups
   enable_services
+  setup_greetd
   setup_cpufreq
   setup_neovim
   setup_theme
@@ -424,7 +479,7 @@ case "${1:-}" in
   --all)      run_all ;;
   --packages) preflight; install_paru; install_packages ;;
   --link)     backup_configs; link_configs ;;
-  --services) enable_services ;;
+  --services) enable_services; setup_greetd ;;
   --theme)    setup_theme ;;
   --help|-h)  usage ;;
   "")
@@ -441,7 +496,7 @@ case "${1:-}" in
       1) run_all ;;
       2) backup_configs; link_configs ;;
       3) preflight; install_paru; install_packages ;;
-      4) enable_services ;;
+      4) enable_services; setup_greetd ;;
       5) setup_theme ;;
       6) exit 0 ;;
       *) err "Invalid choice"; exit 1 ;;

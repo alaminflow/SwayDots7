@@ -203,7 +203,7 @@ map("n", "<leader>t", "<cmd>ToggleTerm direction=float<CR>", { desc = "Float ter
 map("t", "<Esc>", "<C-\\><C-n>", opts)
 
 -- Trouble
-map("n", "<leader>xx", "<cmd>TroubleToggle<cr>", { desc = "Toggle Trouble" })
+map("n", "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", { desc = "Toggle Trouble" })
 
 -- Save / quit
 map("n", "<C-s>", "<cmd>w<CR>",  { desc = "Save" })
@@ -384,17 +384,23 @@ if col_ok then colorizer.setup() end
 -- ── Which-key ────────────────────────────────────────────────────────────────
 local wk_ok, wk = pcall(require, "which-key")
 if wk_ok then
-  wk.setup({ window = { border = "rounded" } })
-  wk.register({
-    ["<leader>f"] = { name = "󰍉 Find" },
-    ["<leader>g"] = { name = " Git" },
-    ["<leader>l"] = { name = " LSP" },
-    ["<leader>b"] = { name = "󰓩 Buffer" },
-    ["<leader>t"] = { name = " Terminal" },
-    ["<leader>x"] = { name = " Trouble" },
+  wk.setup({ preset = "modern" })
+  wk.add({
+    { "<leader>f", group = "󰍉 Find" },
+    { "<leader>g", group = " Git" },
+    { "<leader>l", group = " LSP" },
+    { "<leader>b", group = "󰓩 Buffer" },
+    { "<leader>t", group = " Terminal" },
+    { "<leader>x", group = " Trouble" },
   })
+end
+
+-- ── Better Escape ───────────────────────────────────────────────────────────
+local be_ok, better_escape = pcall(require, "better_escape")
+if be_ok then
+  better_escape.setup({ mapping = { "jk", "jj" }, timeout = 200 })
 end
 
 -- ── Leap.nvim ────────────────────────────────────────────────────────────────
 local leap_ok, leap = pcall(require, "leap")
-if leap_ok then leap.add_default_mappings() end
+if leap_ok then leap.create_default_mappings() end

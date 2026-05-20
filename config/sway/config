@@ -52,7 +52,9 @@ set $crust     #11111b
 output * bg ~/.config/sway/wallpaper.jpg fill
 
 # Primary display — adjust resolution/scale for your screen
+# Adjust for your display — run: swaymsg -t get_outputs
 output eDP-1 resolution 1920x1080 position 0,0 scale 1
+# output * resolution 1920x1080 scale 1   # uncomment to apply to all displays
 
 # ── Input ─────────────────────────────────────────────────────────────────────
 input type:keyboard {
@@ -93,8 +95,10 @@ exec_always {
     pkill dunst;  dunst
 }
 
+exec mkdir -p ~/Pictures/Screenshots
+
 exec {
-    /usr/lib/polkit-kde-authentication-agent-1
+    /usr/lib/polkit-kde-authentication-agent-1 &
     swayidle -w \
         timeout 300 'swaylock -f' \
         timeout 600 'swaymsg "output * dpms off"' \
@@ -102,7 +106,7 @@ exec {
         before-sleep 'swaylock -f'
     wl-paste --type text --watch cliphist store
     wl-paste --type image --watch cliphist store
-    /usr/lib/xdg-desktop-portal-wlr
+    dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
     nm-applet --indicator
     blueman-applet
 }

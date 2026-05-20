@@ -1,0 +1,15 @@
+# /etc/greetd/config.toml
+# greetd configuration — tuigreet TUI login manager
+
+[terminal]
+# The VT to run greetd on. Can be "next" to select the next free VT.
+vt = 1
+
+[default_session]
+# tuigreet — minimal TUI greeter for Sway
+# --time         : show current time
+# --remember     : remember last logged-in user
+# --greeting     : custom greeting message
+# --cmd sway     : what to launch after successful login
+command = "tuigreet --time --remember --greeting 'Welcome back.' --cmd sway"
+user = "greeter"

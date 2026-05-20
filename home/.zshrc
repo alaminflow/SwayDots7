@@ -74,7 +74,7 @@ fi
 
 # ── Aliases — grep ────────────────────────────────────────────────────────────
 alias grep='grep --color=auto'
-alias rg='ripgrep'
+# rg (ripgrep) binary is already named 'rg' — no alias needed
 
 # ── Aliases — Git ─────────────────────────────────────────────────────────────
 alias g='git'
@@ -114,7 +114,7 @@ alias please='sudo'
 alias q='exit'
 alias clr='clear'
 alias reload='source ~/.zshrc'
-alias dotfiles='cd ~/.dotfiles'
+alias dotfiles='cd "${DOTFILES_DIR:-$HOME/.dotfiles}"'
 alias ip='ip --color=auto'
 alias ports='ss -tulnp'
 alias df='df -h'
@@ -203,8 +203,7 @@ fi
 export LESS='-R --use-color'
 export MANPAGER='less -R --use-color -Dd+r -Du+b'
 
-# ── PATH additions ────────────────────────────────────────────────────────────
-export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+# PATH is set in ~/.zshenv for all shell types
 
 # ── Welcome message ───────────────────────────────────────────────────────────
 if command -v fastfetch &>/dev/null && [[ -z "$FASTFETCH_SHOWN" ]]; then

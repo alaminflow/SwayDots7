@@ -56,6 +56,7 @@
   },
 
   "clock": {
+    // Change to your timezone — run: timedatectl list-timezones | grep <region>
     "timezone": "Asia/Kolkata",
     "format": "󰥔  {:%H:%M}",
     "format-alt": "  {:%A, %B %d %Y}",
@@ -119,7 +120,8 @@
     "on-click":       "pavucontrol",
     "on-scroll-up":   "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+",
     "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-",
-    "max-volume": 150,
+    // max-volume: raise to 150 for boost (risks audio clipping)
+    "max-volume": 100,
     "scroll-step": 1
   },
 
