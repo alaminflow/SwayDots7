@@ -85,7 +85,7 @@ install_packages() {
   PACMAN_PKGS=(
     # Core system
     base-devel linux-zen linux-zen-headers linux-firmware intel-ucode btrfs-progs
-    networkmanager bluez bluez-utils blueman
+    networkmanager network-manager-applet bluez bluez-utils blueman
     pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber
     polkit polkit-kde-agent
 
@@ -148,6 +148,7 @@ install_packages() {
     catppuccin-gtk-theme-mocha
     catppuccin-cursors-mocha
     wlogout
+    rofimoji
     grimblast-git
     swappy
     nwg-look
@@ -202,7 +203,7 @@ link_configs() {
     if [[ -d "$src" ]]; then
       rm -rf "$dst"
       ln -sf "$src" "$dst"
-      ok "Linked: ~/.config/$d"
+      ok "Linked: $HOME/.config/$d"
     fi
   done
 
@@ -214,7 +215,7 @@ link_configs() {
     if [[ -f "$src" ]]; then
       rm -f "$dst"
       ln -sf "$src" "$dst"
-      ok "Linked: ~/.config/$f"
+      ok "Linked: $HOME/.config/$f"
     fi
   done
 
@@ -226,7 +227,7 @@ link_configs() {
     if [[ -f "$src" ]]; then
       rm -f "$dst"
       ln -sf "$src" "$dst"
-      ok "Linked: ~/$f"
+      ok "Linked: $HOME/$f"
     fi
   done
 }

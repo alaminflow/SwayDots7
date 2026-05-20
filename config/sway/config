@@ -114,7 +114,7 @@ bindsym $mod+b            exec $browser
 bindsym $mod+e            exec $term -e $filemanager
 bindsym $mod+Shift+e      exec thunar
 bindsym $mod+d            exec $menu
-bindsym $mod+period       exec wofi --show emoji
+bindsym $mod+period       exec rofimoji            # paru -S rofimoji
 bindsym $mod+v            exec cliphist list | wofi --dmenu | cliphist decode | wl-copy
 
 # ── Key bindings — System ──────────────────────────────────────────────────────
@@ -126,20 +126,10 @@ bindsym $mod+Escape       exec $lock
 bindsym $mod+Shift+l      exec swaylock && systemctl suspend
 
 # ── Key bindings — Layout (arrow keys; Super+Arrow and Super+Shift+Arrow) ──────
-bindsym $mod+$left        focus left
-bindsym $mod+$down        focus down
-bindsym $mod+$up          focus up
-bindsym $mod+$right       focus right
-
 bindsym $mod+Left         focus left
 bindsym $mod+Down         focus down
 bindsym $mod+Up           focus up
 bindsym $mod+Right        focus right
-
-bindsym $mod+Shift+$left  move left
-bindsym $mod+Shift+$down  move down
-bindsym $mod+Shift+$up    move up
-bindsym $mod+Shift+$right move right
 
 bindsym $mod+Shift+Left   move left
 bindsym $mod+Shift+Down   move down

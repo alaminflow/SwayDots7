@@ -100,6 +100,7 @@ archinstall
 | `Super + Escape`         | Lock screen                      |
 | `Super + Shift+l`        | Lock + suspend                   |
 | `Super + Shift+x`        | Logout menu (wlogout)            |
+| `Super + Shift+c`        | Reload Sway config               |
 | `Super + f`              | Fullscreen                       |
 | `Super + Shift+space`    | Toggle floating                  |
 | `Super + space`          | Focus mode toggle                |
@@ -112,7 +113,7 @@ archinstall
 | `Super + -`              | Split vertical                   |
 | `Super + v`              | Clipboard history (cliphist)     |
 | `Super + .`              | Emoji picker                     |
-| `Super + grave`          | Scratchpad show                  |
+| `Super + grave`          | Scratchpad toggle (`` ` `` key, left of `1`) |
 | `Super + Shift+minus`    | Move to scratchpad               |
 | `Super + Tab`            | Next workspace                   |
 | `Super + Shift+Tab`      | Previous workspace               |
